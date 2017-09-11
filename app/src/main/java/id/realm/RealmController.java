@@ -68,23 +68,18 @@ public class RealmController {
 
     //query a single item with the given id
     public Book getBook(String id) {
-
         return realm.where(Book.class).equalTo("id", id).findFirst();
     }
 
     //check if Book.class is empty
     public boolean hasBooks() {
-
         return !realm.allObjects(Book.class).isEmpty();
     }
 
     //query example
     public RealmResults<Book> queryedBooks() {
-
         return realm.where(Book.class)
-                .contains("author", "Author 0")
-                .or()
-                .contains("title", "Realm")
+                .equalTo("author", "Dini")
                 .findAll();
 
     }

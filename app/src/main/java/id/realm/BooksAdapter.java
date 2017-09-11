@@ -84,7 +84,7 @@ public class BooksAdapter extends RealmRecyclerViewAdapter<Book> {
 
         @Override
         public void onClick(View v) {
-            if (onItemClickListener != null) {
+            if (onItemClickListener != null && getRealmAdapter() != null) {
                 onItemClickListener.onItemClick(book, position);
             }
         }

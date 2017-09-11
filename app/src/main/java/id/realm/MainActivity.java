@@ -59,6 +59,19 @@ public class MainActivity extends AppCompatActivity implements BooksAdapter.OnIt
 
         RealmController.with(this).refresh();
         setRealmAdapter(RealmController.with(this).getBooks());
+
+        List<Book> books = RealmController.with(this).queryedBooks();
+        if (books != null)
+            for (int i = 0; i < books.size(); i++)
+                System.out.println("BOOKS : " + books.get(i).getAuthor() + " - " + books.get(i).getBookTitle());
+
+        if (!RealmController.with(this).hasBooks()) {
+            linearLayoutEmpty.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            linearLayoutEmpty.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -81,7 +94,6 @@ public class MainActivity extends AppCompatActivity implements BooksAdapter.OnIt
         RealmBooksAdapter realmAdapter = new RealmBooksAdapter(this.getApplicationContext(), books, true);
         adapter.setRealmAdapter(realmAdapter);
         adapter.notifyDataSetChanged();
-        //showEmptyState();
     }
 
     private void setRecyclerView() {
@@ -125,38 +137,39 @@ public class MainActivity extends AppCompatActivity implements BooksAdapter.OnIt
         editTextAuthor = (TextInputEditText) content.findViewById(R.id.edit_text_view_author);
         editTextImage = (TextInputEditText) content.findViewById(R.id.edit_text_view_image);
 
-        editTextTitle.setText(book.getBookTitle());
-        editTextAuthor.setText(book.getAuthor());
-        editTextImage.setText(book.getImageUrl());
+        if (book != null) {
+            editTextTitle.setText(book.getBookTitle());
+            editTextAuthor.setText(book.getAuthor());
+            editTextImage.setText(book.getImageUrl());
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setView(content)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setView(content)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
 
-                        RealmResults<Book> results = realm.where(Book.class).findAll();
+                            RealmResults<Book> results = realm.where(Book.class).findAll();
 
-                        realm.beginTransaction();
-                        results.get(position).setAuthor(editTextAuthor.getText().toString());
-                        results.get(position).setBookTitle(editTextTitle.getText().toString());
-                        results.get(position).setImageUrl(editTextImage.getText().toString());
+                            realm.beginTransaction();
+                            results.get(position).setAuthor(editTextAuthor.getText().toString());
+                            results.get(position).setBookTitle(editTextTitle.getText().toString());
+                            results.get(position).setImageUrl(editTextImage.getText().toString());
 
-                        realm.commitTransaction();
+                            realm.commitTransaction();
 
-                        adapter.notifyDataSetChanged();
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                            adapter.notifyDataSetChanged();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        //showEmptyState();
-        AlertDialog dialog = builder.create();
-        dialog.show();
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
 
     private void showDialogCreate() {
@@ -187,9 +200,15 @@ public class MainActivity extends AppCompatActivity implements BooksAdapter.OnIt
                             realm.commitTransaction();
 
                             adapter.notifyDataSetChanged();
+                            if (!RealmController.with(MainActivity.this).hasBooks()) {
+                                linearLayoutEmpty.setVisibility(View.VISIBLE);
+                                recyclerView.setVisibility(View.GONE);
+                            } else {
+                                linearLayoutEmpty.setVisibility(View.GONE);
+                                recyclerView.setVisibility(View.VISIBLE);
+                            }
                             recyclerView.scrollToPosition(RealmController.getInstance().getBooks().size() - 1);
                         }
-                        //showEmptyState();
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -205,33 +224,28 @@ public class MainActivity extends AppCompatActivity implements BooksAdapter.OnIt
 
     @Override
     public void onItemClick(Book data, int position) {
-        RealmResults<Book> results = realm.where(Book.class).findAll();
-        if (results != null || results.size() != 0 || data != null)
+        //System.out.println("DATA : " + data.getBookTitle());
+        if (data.getBookTitle() != null)
             showDialogEdit(data, position);
     }
 
     @Override
     public void onItemLongClick(Book data, int position) {
         RealmResults<Book> results = realm.where(Book.class).findAll();
+        String title = data.getBookTitle();
         realm.beginTransaction();
         results.remove(position);
         realm.commitTransaction();
-        if (results.size() == 0) {
-            //Prefs.with(this).setPreLoad(false);
-        }
-
         adapter.notifyDataSetChanged();
-        //showEmptyState();
-    }
 
-    private void showEmptyState() {
-        RealmResults<Book> results = RealmController.with(this).getBooks();
-        if (results.size() == 0 || results == null) {
+        Toast.makeText(MainActivity.this, title + " has been deleted", Toast.LENGTH_SHORT).show();
+
+       /* if (!RealmController.with(this).hasBooks()) {
             linearLayoutEmpty.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
             linearLayoutEmpty.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
-        }
+        }*/
     }
 }
